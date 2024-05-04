@@ -1,0 +1,33 @@
+---
+- name: Harden Host Environment
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt cache and upgrade packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+      when: ansible_os_family == 'Debian'
+
+    - name: Enable UFW (Uncomplicated Firewall)
+      apt:
+        name: ufw
+        state: present
+      become: true
+      when: ansible_os_family == 'Debian'
+
+    - name: Configure UFW rules
+      ufw:
+        rule: allow
+        port: 22
+      when: ansible_os_family == 'Debian'
+
+- name: Build and Scan Docker Image
+  hosts: localhost
+  tasks:
+    - name: Build Docker image
+      command: docker build -t your-image-name:latest /home/akosieric/Docker_sec_CPE32S4/
+      become: true
+
+    - name: Scan Docker image for vulnerabilities using Trivy
+      command: sudo trivy image --exit-code 1 your-image-name:latest
